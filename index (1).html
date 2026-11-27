@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop Tk — Live Order & Menu</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-2: #0b1220;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
+    header {
+      background: var(--card-2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand { font-size: 20px; font-weight: 800; letter-spacing: 0.4px; }
+    .brand span { color: var(--accent); }
+    .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h2, h3 { margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .item-card {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .price { font-weight: 700; color: var(--accent); font-size: 16px; }
+    .badge-out {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+      border: 1px solid var(--danger);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    button {
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-dark); color: #fff; }
+    button.secondary { background: #334155; color: var(--text); }
+    button.secondary:hover { background: #475569; }
+    button.danger { background: var(--danger); color: #fff; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    input, textarea, select {
+      width: 100%;
+      background: var(--card-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    label { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .order-box {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    a.map-link { color: #38bdf8; word-break: break-all; font-size: 13px; }
+    .ring-banner {
+      background: rgba(245, 158, 11, 0.16);
+      border: 1px solid var(--warning);
+      color: #fde68a;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .upi-box {
+      background: var(--card-2);
+      border: 1px dashed var(--accent);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Shop <span>Tk</span></div>
+    <div class="row" id="headerActions">
+      <button type="button" class="secondary" id="switchToOwnerBtn">Owner Panel</button>
+      <button type="button" class="secondary hidden" id="switchToCustomerBtn">Customer View</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- CUSTOMER VIEW -->
+    <div id="customerView">
+      <div class="card">
+        <h2 id="shopTitleDisplay">Shop Tk</h2>
+        <p class="muted" id="shopContactDisplay">Support / WhatsApp: Not set yet</p>
+        <div class="grid" id="menuGrid"></div>
+      </div>
+
+      <div class="card" id="orderFormCard">
+        <h3>Place Your Order</h3>
+        <p class="muted">Selected item: <strong id="selectedItemText">None</strong></p>
+
+        <label for="custName">Your Name *</label>
+        <input id="custName" type="text" placeholder="Enter your name" />
+
+        <label for="custPhone">Phone / WhatsApp Number *</label>
+        <input id="custPhone" type="tel" placeholder="e.g. 9876543210" />
+
+        <label for="custRoom">Room / Flat / Floor No. (Optional)</label>
+        <input id="custRoom" type="text" placeholder="e.g. Room 204, 2nd Floor" />
+
+        <label for="custAddress">Full Address / Landmark *</label>
+        <textarea id="custAddress" rows="2" placeholder="Street, area, landmark..."></textarea>
+
+        <label for="paymentModeSelect">Payment Mode *</label>
+        <select id="paymentModeSelect">
+          <option value="Cash on Delivery">Cash on Delivery</option>
+          <option value="UPI">UPI</option>
+        </select>
+
+        <div class="upi-box hidden" id="upiInfoBox">
+          <div><strong>UPI Payment Details</strong></div>
+          <div class="muted" id="upiIdDisplay" style="margin-top:4px;">UPI ID: Not set by owner yet</div>
+          <div class="row" style="margin-top:8px;">
+            <a id="upiIntentLink" href="#" style="text-decoration:none;" class="hidden">
+              <button type="button" class="secondary">Pay via UPI App</button>
+            </a>
+          </div>
+        </div>
+
+        <label>Live Location (Optional — One Tap)</label>
+        <div class="row" style="margin-top:6px; margin-bottom:10px;">
+          <button type="button" class="secondary" id="getLocationBtn">📍 Use Live Location</button>
+          <button type="button" class="secondary" id="clearLocationBtn">Clear</button>
+        </div>
+        <input id="custLocationLink" type="text" placeholder="Google Maps link will appear here when tapped" readonly />
+        <div class="muted" id="locationStatus" style="margin-bottom:12px;">Tap "Use Live Location" to attach exact GPS map link.</div>
+
+        <button type="button" id="placeOrderBtn">Submit Order</button>
+        <div class="muted" id="orderFeedback" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- OWNER PIN MODAL -->
+    <div class="card hidden" id="pinCard">
+      <h3>Owner Login</h3>
+      <label for="ownerPinInput">Enter Owner PIN</label>
+      <input id="ownerPinInput" type="password" placeholder="Enter PIN (default: 1234)" />
+      <div class="row">
+        <button type="button" id="verifyPinBtn">Unlock Owner Panel</button>
+        <button type="button" class="secondary" id="cancelPinBtn">Back</button>
+      </div>
+      <div class="muted" id="pinError" style="margin-top:8px; color:#fca5a5;"></div>
+    </div>
+
+    <!-- OWNER PANEL -->
+    <div id="ownerView" class="hidden">
+      <div class="ring-banner" id="ringBanner">
+        <div><strong>🔔 New Order Received!</strong> Ringing continuously until stopped.</div>
+        <button type="button" class="danger" id="stopRingBtn">Stop Ring</button>
+      </div>
+
+      <div class="card">
+        <h3>Live Orders</h3>
+        <div id="ordersList"><p class="muted">No orders yet.</p></div>
+      </div>
+
+      <div class="card">
+        <h3>Menu & Stock Management</h3>
+        <div class="grid">
+          <div>
+            <label for="newItemName">Item Name</label>
+            <input id="newItemName" type="text" placeholder="e.g. Cold Coffee" />
+          </div>
+          <div>
+            <label for="newItemPrice">Price (₹)</label>
+            <input id="newItemPrice" type="number" placeholder="e.g. 80" />
+          </div>
+        </div>
+        <button type="button" id="addMenuItemBtn">Add Menu Item</button>
+        <div class="grid" id="ownerMenuList" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Shop & Firebase Sync Settings</h3>
+        <label for="firebaseUrlInput">Firebase Realtime Database URL</label>
+        <input id="firebaseUrlInput" type="text" placeholder="https://....firebasedatabase.app" />
+
+        <label for="shopPhoneInput">Shop Phone / WhatsApp Number</label>
+        <input id="shopPhoneInput" type="text" placeholder="e.g. 9876543210" />
+
+        <label for="shopUpiInput">Shop UPI ID (for UPI Payment Mode)</label>
+        <input id="shopUpiInput" type="text" placeholder="e.g. yourname@upi" />
+
+        <label for="ownerPinChangeInput">Owner PIN</label>
+        <input id="ownerPinChangeInput" type="text" placeholder="1234" />
+
+        <button type="button" id="saveSettingsBtn">Save Settings</button>
+        <div class="muted" id="settingsFeedback" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_FIREBASE_URL = "https://my-shop-65d1b-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const DEFAULT_PIN = "1234";
+
+    let state = {
+      firebaseUrl: localStorage.getItem("shoptk_fb_url") || DEFAULT_FIREBASE_URL,
+      shopPhone: localStorage.getItem("shoptk_phone") || "",
+      shopUpi: localStorage.getItem("shoptk_upi") || "",
+      pin: localStorage.getItem("shoptk_pin") || DEFAULT_PIN,
+      menu: JSON.parse(localStorage.getItem("shoptk_menu") || "null") || [
+        { id: "item_1", name: "Classic Cold Coffee", price: 90, outOfStock: false },
+        { id: "item_2", name: "Choco Hazelnut Coffee", price: 120, outOfStock: false }
+      ],
+      orders: JSON.parse(localStorage.getItem("shoptk_orders") || "[]")
+    };
+
+    let selectedItem = state.menu.find(i => !i.outOfStock) || null;
+    let ringInterval = null;
+    let audioCtx = null;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const isCustomerOnly = urlParams.get("view") === "customer";
+
+    function cleanDbUrl(url) {
+      return (url || "").trim().replace(/\/+$/, "");
+    }
+
+    function saveLocal() {
+      localStorage.setItem("shoptk_fb_url", state.firebaseUrl);
+      localStorage.setItem("shoptk_phone", state.shopPhone);
+      localStorage.setItem("shoptk_upi", state.shopUpi);
+      localStorage.setItem("shoptk_pin", state.pin);
+      localStorage.setItem("shoptk_menu", JSON.stringify(state.menu));
+      localStorage.setItem("shoptk_orders", JSON.stringify(state.orders));
+    }
+
+    async function syncToFirebase(path, data) {
+      const base = cleanDbUrl(state.firebaseUrl);
+      if (!base) return false;
+      try {
+        const res = await fetch(`${base}/${path}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        return res.ok;
+      } catch (e) {
+        console.warn("Firebase sync error:", e);
+        return false;
+      }
+    }
+
+    async function loadFromFirebase() {
+      const base = cleanDbUrl(state.firebaseUrl);
+      if (!base) return;
+      try {
+        const [menuRes, ordersRes, settingsRes] = await Promise.all([
+          fetch(`${base}/menu.json`),
+          fetch(`${base}/orders.json`),
+          fetch(`${base}/settings.json`)
+        ]);
+        if (!menuRes.ok || !ordersRes.ok || !settingsRes.ok) return;
+
+        const menuData = await menuRes.json();
+        const ordersData = await ordersRes.json();
+        const settingsData = await settingsRes.json();
+
+        if (Array.isArray(menuData) && menuData.length) {
+          state.menu = menuData;
+        }
+        if (ordersData && typeof ordersData === "object") {
+          const prevCount = state.orders.length;
+          const list = Object.values(ordersData).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          state.orders = list;
+          if (list.length > prevCount && !document.getElementById("ownerView").classList.contains("hidden")) {
+            startContinuousRing();
+          }
+        }
+        if (settingsData && typeof settingsData === "object") {
+          if (settingsData.shopPhone !== undefined) state.shopPhone = settingsData.shopPhone;
+          if (settingsData.shopUpi !== undefined) state.shopUpi = settingsData.shopUpi;
+        }
+        saveLocal();
+        renderAll();
+      } catch (e) {
+        console.warn("Firebase fetch error:", e);
+      }
+    }
+
+    function playBeepOnce() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function startContinuousRing() {
+      document.getElementById("ringBanner").style.display = "flex";
+      if (ringInterval) return;
+      playBeepOnce();
+      ringInterval = setInterval(playBeepOnce, 1400);
+    }
+
+    function stopContinuousRing() {
+      document.getElementById("ringBanner").style.display = "none";
+      if (ringInterval) {
+        clearInterval(ringInterval);
+        ringInterval = null;
+      }
+    }
+
+    function updatePaymentUi() {
+      const mode = document.getElementById("paymentModeSelect").value;
+      const box = document.getElementById("upiInfoBox");
+      const upiDisplay = document.getElementById("upiIdDisplay");
+      const upiLinkEl = document.getElementById("upiIntentLink");
+
+      if (mode === "UPI") {
+        box.classList.remove("hidden");
+        if (state.shopUpi) {
+          upiDisplay.textContent = `UPI ID: ${state.shopUpi}`;
+          const amt = selectedItem ? selectedItem.price : "";
+          const params = new URLSearchParams({
+            pa: state.shopUpi,
+            pn: "Shop Tk",
+            cu: "INR"
+          });
+          if (amt) params.set("am", String(amt));
+          upiLinkEl.href = `upi://pay?${params.toString()}`;
+          upiLinkEl.classList.remove("hidden");
+        } else {
+          upiDisplay.textContent = "UPI ID: Not set by owner yet (you can still choose UPI and pay at shop/delivery)";
+          upiLinkEl.classList.add("hidden");
+        }
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+
+    function renderCustomerMenu() {
+      const grid = document.getElementById("menuGrid");
+      grid.innerHTML = "";
+      document.getElementById("shopContactDisplay").textContent =
+        state.shopPhone ? `Phone / WhatsApp: ${state.shopPhone}` : "Phone / WhatsApp: Not set";
+
+      state.menu.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.innerHTML = `
+          <div>
+            <div><strong>${item.name}</strong></div>
+            <div class="price" style="margin-top:4px;">₹${item.price}</div>
+          </div>
+          <div>
+            ${
+              item.outOfStock
+                ? `<span class="badge-out">Out of Stock</span>`
+                : `<button type="button" onclick="selectItem('${item.id}')">Select Item</button>`
+            }
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+
+      if (!selectedItem || selectedItem.outOfStock) {
+        selectedItem = state.menu.find(i => !i.outOfStock) || null;
+      }
+      document.getElementById("selectedItemText").textContent = selectedItem
+        ? `${selectedItem.name} (₹${selectedItem.price})`
+        : "No available item";
+      updatePaymentUi();
+    }
+
+    window.selectItem = function(id) {
+      const found = state.menu.find(i => i.id === id && !i.outOfStock);
+      if (found) {
+        selectedItem = found;
+        renderCustomerMenu();
+      }
+    };
+
+    function renderOwnerMenu() {
+      const list = document.getElementById("ownerMenuList");
+      list.innerHTML = "";
+      state.menu.forEach((item, idx) => {
+        const div = document.createElement("div");
+        div.className = "item-card";
+        div.innerHTML = `
+          <div>
+            <strong>${item.name}</strong> — <span class="price">₹${item.price}</span>
+            <div class="muted">${item.outOfStock ? "Out of Stock" : "Available"}</div>
+          </div>
+          <div class="row">
+            <button type="button" class="secondary" onclick="toggleStock(${idx})">
+              ${item.outOfStock ? "Mark Available" : "Out of Stock"}
+            </button>
+            <button type="button" class="danger" onclick="deleteMenuItem(${idx})">Delete</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    window.toggleStock = async function(idx) {
+      state.menu[idx].outOfStock = !state.menu[idx].outOfStock;
+      saveLocal();
+      renderAll();
+      await syncToFirebase("menu", state.menu);
+    };
+
+    window.deleteMenuItem = async function(idx) {
+      state.menu.splice(idx, 1);
+      saveLocal();
+      renderAll();
+      await syncToFirebase("menu", state.menu);
+    };
+
+    function renderOrders() {
+      const container = document.getElementById("ordersList");
+      if (!state.orders.length) {
+        container.innerHTML = `<p class="muted">No orders yet.</p>`;
+        return;
+      }
+      container.innerHTML = "";
+      state.orders.forEach((ord, i) => {
+        const div = document.createElement("div");
+        div.className = "order-box";
+        const mapHtml = ord.locationLink
+          ? `<div><strong>Live Location:</strong> <a class="map-link" href="${ord.locationLink}" target="_blank" rel="noopener">${ord.locationLink}</a>
+             <button type="button" class="secondary" style="padding:5px 10px; font-size:12px; margin-left:6px;" onclick="copyText('${ord.locationLink}')">Copy Map Link</button></div>`
+          : `<div class="muted">Live Location: Not attached</div>`;
+
+        div.innerHTML = `
+          <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <strong>${ord.itemName} (₹${ord.price})</strong>
+            <span class="muted">${ord.timeText || ""}</span>
+          </div>
+          <div style="margin-top:6px;"><strong>Payment:</strong> ${ord.paymentMode || "Cash on Delivery"}</div>
+          <div><strong>Customer:</strong> ${ord.customerName} | <strong>Phone:</strong> <a class="map-link" href="tel:${ord.phone}">${ord.phone}</a></div>
+          ${ord.room ? `<div><strong>Room / Flat:</strong> ${ord.room}</div>` : ""}
+          <div><strong>Address:</strong> ${ord.address}</div>
+          ${mapHtml}
+          <div class="row" style="margin-top:10px;">
+            <button type="button" class="secondary" onclick="markCompleted(${i})">Complete & Remove</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.copyText = function(txt) {
+      navigator.clipboard?.writeText(txt);
+      alert("Location link copied!");
+    };
+
+    window.markCompleted = async function(idx) {
+      const removed = state.orders[idx];
+      state.orders.splice(idx, 1);
+      saveLocal();
+      renderOrders();
+      const base = cleanDbUrl(state.firebaseUrl);
+      if (base && removed && removed.id) {
+        try {
+          await fetch(`${base}/orders/${removed.id}.json`, { method: "DELETE" });
+        } catch (e) {}
+      }
+    };
+
+    function renderSettingsInputs() {
+      document.getElementById("firebaseUrlInput").value = state.firebaseUrl;
+      document.getElementById("shopPhoneInput").value = state.shopPhone;
+      document.getElementById("shopUpiInput").value = state.shopUpi;
+      document.getElementById("ownerPinChangeInput").value = state.pin;
+    }
+
+    function renderAll() {
+      renderCustomerMenu();
+      renderOwnerMenu();
+      renderOrders();
+      renderSettingsInputs();
+    }
+
+    function showCustomerView() {
+      document.getElementById("customerView").classList.remove("hidden");
+      document.getElementById("pinCard").classList.add("hidden");
+      document.getElementById("ownerView").classList.add("hidden");
+      document.getElementById("switchToOwnerBtn").classList.remove("hidden");
+      document.getElementById("switchToCustomerBtn").classList.add("hidden");
+    }
+
+    function showPinCard() {
+      document.getElementById("customerView").classList.add("hidden");
+      document.getElementById("pinCard").classList.remove("hidden");
+      document.getElementById("ownerView").classList.add("hidden");
+      document.getElementById("ownerPinInput").value = "";
+      document.getElementById("pinError").textContent = "";
+      document.getElementById("switchToOwnerBtn").classList.add("hidden");
+      document.getElementById("switchToCustomerBtn").classList.remove("hidden");
+    }
+
+    function showOwnerPanel() {
+      document.getElementById("customerView").classList.add("hidden");
+      document.getElementById("pinCard").classList.add("hidden");
+      document.getElementById("ownerView").classList.remove("hidden");
+      document.getElementById("switchToOwnerBtn").classList.add("hidden");
+      document.getElementById("switchToCustomerBtn").classList.remove("hidden");
+      renderAll();
+      loadFromFirebase();
+    }
+
+    document.getElementById("paymentModeSelect").addEventListener("change", updatePaymentUi);
+    document.getElementById("switchToOwnerBtn").addEventListener("click", showPinCard);
+    document.getElementById("switchToCustomerBtn").addEventListener("click", showCustomerView);
+    document.getElementById("cancelPinBtn").addEventListener("click", showCustomerView);
+
+    document.getElementById("verifyPinBtn").addEventListener("click", () => {
+      const entered = document.getElementById("ownerPinInput").value.trim();
+      if (entered === state.pin) {
+        showOwnerPanel();
+      } else {
+        document.getElementById("pinError").textContent = "Wrong PIN. Default PIN is 1234.";
+      }
+    });
+
+    document.getElementById("stopRingBtn").addEventListener("click", stopContinuousRing);
+
+    document.getElementById("addMenuItemBtn").addEventListener("click", async () => {
+      const name = document.getElementById("newItemName").value.trim();
+      const price = Number(document.getElementById("newItemPrice").value);
+      if (!name || !price || price <= 0) {
+        alert("Please enter valid item name and price.");
+        return;
+      }
+      state.menu.push({
+        id: "item_" + Date.now(),
+        name,
+        price,
+        outOfStock: false
+      });
+      document.getElementById("newItemName").value = "";
+      document.getElementById("newItemPrice").value = "";
+      saveLocal();
+      renderAll();
+      await syncToFirebase("menu", state.menu);
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+      const fbUrl = cleanDbUrl(document.getElementById("firebaseUrlInput").value);
+      const phone = document.getElementById("shopPhoneInput").value.trim();
+      const upi = document.getElementById("shopUpiInput").value.trim();
+      const newPin = document.getElementById("ownerPinChangeInput").value.trim() || DEFAULT_PIN;
+
+      state.firebaseUrl = fbUrl;
+      state.shopPhone = phone;
+      state.shopUpi = upi;
+      state.pin = newPin;
+      saveLocal();
+      renderAll();
+
+      const synced = await syncToFirebase("settings", { shopPhone: state.shopPhone, shopUpi: state.shopUpi });
+      document.getElementById("settingsFeedback").textContent = synced
+        ? "Settings saved & synced with Firebase!"
+        : "Settings saved locally. Check Firebase URL & Database Rules if cloud sync is needed.";
+    });
+
+    document.getElementById("getLocationBtn").addEventListener("click", () => {
+      const statusEl = document.getElementById("locationStatus");
+      if (!navigator.geolocation) {
+        statusEl.textContent = "Geolocation is not supported on this browser.";
+        return;
+      }
+      statusEl.textContent = "Detecting live GPS location...";
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+          document.getElementById("custLocationLink").value = mapsUrl;
+          statusEl.textContent = "Live location attached!";
+        },
+        err => {
+          statusEl.textContent = "Could not fetch location (permission denied or GPS off). You can still type address manually.";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+
+    document.getElementById("clearLocationBtn").addEventListener("click", () => {
+      document.getElementById("custLocationLink").value = "";
+      document.getElementById("locationStatus").textContent = "Location cleared.";
+    });
+
+    document.getElementById("placeOrderBtn").addEventListener("click", async () => {
+      const feedback = document.getElementById("orderFeedback");
+      if (!selectedItem || selectedItem.outOfStock) {
+        feedback.textContent = "Please select an available item first.";
+        return;
+      }
+      const customerName = document.getElementById("custName").value.trim();
+      const phone = document.getElementById("custPhone").value.trim();
+      const room = document.getElementById("custRoom").value.trim();
+      const address = document.getElementById("custAddress").value.trim();
+      const paymentMode = document.getElementById("paymentModeSelect").value;
+      const locationLink = document.getElementById("custLocationLink").value.trim();
+
+      if (!customerName || !phone || !address) {
+        feedback.textContent = "Please fill Name, Phone Number, and Address.";
+        return;
+      }
+
+      const orderId = "ord_" + Date.now();
+      const newOrder = {
+        id: orderId,
+        itemName: selectedItem.name,
+        price: selectedItem.price,
+        paymentMode,
+        customerName,
+        phone,
+        room,
+        address,
+        locationLink,
+        createdAt: Date.now(),
+        timeText: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      };
+
+      state.orders.unshift(newOrder);
+      saveLocal();
+      renderOrders();
+      const synced = await syncToFirebase(`orders/${orderId}`, newOrder);
+
+      feedback.textContent = synced
+        ? `Order placed (${paymentMode})!`
+        : `Order (${paymentMode}) saved on device. Check Firebase Database URL & Rules for live sync.`;
+
+      document.getElementById("custName").value = "";
+      document.getElementById("custPhone").value = "";
+      document.getElementById("custRoom").value = "";
+      document.getElementById("custAddress").value = "";
+      document.getElementById("custLocationLink").value = "";
+      document.getElementById("locationStatus").textContent = 'Tap "Use Live Location" to attach exact GPS map link.';
+    });
+
+    if (isCustomerOnly) {
+      document.getElementById("headerActions").classList.add("hidden");
+    }
+
+    renderAll();
+    loadFromFirebase();
+    setInterval(loadFromFirebase, 6000);
+  </script>
+</body>
+</html>
